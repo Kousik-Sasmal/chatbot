@@ -1,5 +1,6 @@
 import streamlit as st
 import openai
+from pinecone import PineconeProtocolError
 from streamlit_chat import message
 from utils import get_conversation_string, find_match, query_refiner
 
@@ -76,4 +77,7 @@ try:
 
 except openai.error.AuthenticationError:
     errormessage = "Please provide a valid OpenAI API Key."
-    st.write(errormessage)
+    st.header(errormessage)
+except PineconeProtocolError:
+    errormessage = "Please check the Pinecone API Key and/or Pinecone Index."
+    st.header(errormessage)
