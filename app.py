@@ -1,4 +1,5 @@
 import streamlit as st
+import openai
 from streamlit_chat import message
 from utils import get_conversation_string, find_match, query_refiner
 
@@ -45,30 +46,34 @@ conversation = ConversationChain(memory=st.session_state.buffer_memory, prompt=p
 textcontainer = st.container()
 response_container = st.container()
 
+try:
+    with textcontainer:
+        query = st.text_input("Query: ", key="input")
+        if query:
+            with st.spinner("typing..."):
+                conversation_string = get_conversation_string()
+                # st.code(conversation_string)
 
-with textcontainer:
-    query = st.text_input("Query: ", key="input")
-    if query:
-        with st.spinner("typing..."):
-            conversation_string = get_conversation_string()
-            # st.code(conversation_string)
+                refined_query = query_refiner(conversation_log=conversation_string,query=query)
+                st.subheader('Refined Query:')
+                st.write(refined_query)
 
-            refined_query = query_refiner(conversation_log=conversation_string,query=query)
-            st.subheader('Refined Query:')
-            st.write(refined_query)
+                context = find_match(refined_query)
+                # st.code(context)
 
-            context = find_match(refined_query)
-            # st.code(context)
+                response = conversation.predict(input=f"Context:\n {context} \n\n Query:\n{query}")
 
-            response = conversation.predict(input=f"Context:\n {context} \n\n Query:\n{query}")
-
-        st.session_state.requests.append(query)
-        st.session_state.responses.append(response)
+            st.session_state.requests.append(query)
+            st.session_state.responses.append(response)
 
 
-with response_container:
-    if st.session_state['responses']:
-        for i in range(len(st.session_state['responses'])):
-            message(st.session_state['responses'][i],key=str(i))
-            if i < len(st.session_state['requests']):
-                message(st.session_state["requests"][i], is_user=True,key=str(i)+ '_user')
+    with response_container:
+        if st.session_state['responses']:
+            for i in range(len(st.session_state['responses'])):
+                message(st.session_state['responses'][i],key=str(i))
+                if i < len(st.session_state['requests']):
+                    message(st.session_state["requests"][i], is_user=True,key=str(i)+ '_user')
+
+except openai.error.AuthenticationError:
+    errormessage = "Please provide a valid OpenAI API Key."
+    st.write(errormessage)
