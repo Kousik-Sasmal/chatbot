@@ -78,6 +78,10 @@ try:
 except openai.error.AuthenticationError:
     errormessage = "Please provide a valid OpenAI API Key."
     st.header(errormessage)
+
 except PineconeProtocolError:
     errormessage = "Please check the Pinecone API Key and/or Pinecone Index."
     st.header(errormessage)
+
+except Exception as e:
+    st.header (e.__class__.__name__)
